@@ -1,24 +1,54 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { StyleSheet, View, KeyboardAvoidingView, ScrollView } from 'react-native'
 import { Image, Button, Input } from "react-native-elements"
 import { StatusBar } from "expo-status-bar"
 // import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { auth } from "../../firebase"
+
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Setting a timer']);
+
 
 export default function LoginScreen({navigation}) {
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
 
+    useEffect(()=>{
+        const unsubscribe = auth.onAuthStateChanged((authUser)=>{
+            console.log("LOGIN")
+            // console.log(authUser)
+            if (authUser) {
+                navigation.replace("Messages")
+            }
+        })
+        return unsubscribe
+    },[])
+
+    const handleLogin = () => {
+        auth.signInWithEmailAndPassword(email, password)
+        .then((authUser)=>{
+            // console.log(authUser)
+            if (authUser) {
+                navigation.replace("Messages")
+            }
+        })
+        .catch((error)=>alert(error.message))
+    }
+
     return (
         <View style={styles.container}>
-            <KeyboardAvoidingView enabled={true} style={styles.container} >
+            <KeyboardAvoidingView enabled={true}>
                 <StatusBar style="light" />
-                <Image 
-                    source={{
-                        uri:"https://blog.mozilla.org/internetcitizen/files/2018/08/signal-logo.png"
-                    }}
-                    style={{height:150, width:150}}
-                />
+                <View style={styles.logo}>
+                    <Image
+                        style={{height:150, width:150}} 
+                        source={{
+                            uri:"https://blog.mozilla.org/internetcitizen/files/2018/08/signal-logo.png"
+                        }}
+                    />
+                </View>
+                
                 <View style={styles.inputContainer}>
                     <Input 
                         placeholder="Email" 
@@ -35,10 +65,10 @@ export default function LoginScreen({navigation}) {
                 </View>
 
                 <View style={styles.button}>
-                    <Button style={styles.button} title="Login"  />
+                    <Button raised={true} onPress={handleLogin} title="Login"  />
                 </View>
                 <View style={styles.button}>
-                    <Button style={styles.button} onPress={()=>navigation.navigate("Register")} type="outline" title="Register" />
+                    <Button onPress={()=>navigation.navigate("Register")} type="outline" title="Register" />
                 </View>
                     
 
@@ -56,11 +86,15 @@ const styles = StyleSheet.create({
         padding:10,
         backgroundColor:"white"
     },
+    logo:{
+        alignSelf:"center",
+    },
     inputContainer:{
         width:300
     },
     button:{
         width:200,
-        marginTop:10
+        marginTop:10,
+        alignSelf:"center"
     }
 })
